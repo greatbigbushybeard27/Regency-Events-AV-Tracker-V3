@@ -1,0 +1,712 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#111111">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="AV Tracker">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg">
+<title>AV Tracker</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:system-ui,-apple-system,Segoe UI,sans-serif;background:#f3f4f6;color:#111827}
+header{background:#111827;color:#fff;padding:18px 16px 14px}
+h1{font-size:22px;margin:0}.sub{opacity:.7;font-size:12px;margin-top:3px}
+main{max-width:760px;margin:auto;padding:14px 14px 100px}
+.topnav{display:none!important}
+button{border:0;border-radius:10px;padding:11px 12px;font-weight:650;background:#111827;color:#fff;font-size:14px;cursor:pointer}
+button.secondary{background:#e5e7eb;color:#111827}.danger{background:#b91c1c!important}.green{background:#15803d!important}
+.card{background:#fff;border-radius:14px;padding:15px;margin:10px 0;box-shadow:0 1px 4px #0001}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.row{display:flex;justify-content:space-between;gap:10px;align-items:center}
+.muted{color:#6b7280;font-size:13px}.small{font-size:11px;color:#6b7280}
+.badge{padding:5px 8px;border-radius:999px;font-size:12px;font-weight:700;background:#dcfce7;color:#166534}
+.out{background:#fee2e2;color:#991b1b}.actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px}
+input,select{width:100%;padding:11px;border:1px solid #d1d5db;border-radius:9px;margin:5px 0 10px;font-size:15px}
+label{font-size:13px;font-weight:650}.empty{text-align:center;padding:35px 10px;color:#6b7280}
+.hidden{display:none!important}
+.progress{display:flex;gap:4px;overflow-x:auto;margin:10px 0}.step{padding:6px 8px;border-radius:999px;background:#e5e7eb;color:#4b5563;font-size:11px;font-weight:700;white-space:nowrap;cursor:pointer}.step.active{background:#111827;color:#fff}.step.done{background:#dcfce7;color:#166534}
+.modal{position:fixed;inset:0;background:#0008;display:flex;align-items:flex-end;z-index:10000}
+.sheet{background:#fff;width:100%;max-height:92vh;overflow:auto;border-radius:18px 18px 0 0;padding:18px 18px calc(30px + env(safe-area-inset-bottom))}
+.close{float:right}
+.job-summary{margin-top:12px;border:1px solid #dbe1e8;border-radius:14px;padding:14px;background:#fff}
+.job-summary-title{font-size:18px;font-weight:800}.job-summary-sub{font-size:12px;color:#6b7280;margin-top:3px}.job-summary.job-complete{opacity:.88}.badge.complete{background:#e5e7eb;color:#374151}.completed-heading{margin:22px 4px 8px}
+.job-progress-track{height:12px;background:#e5e7eb;border-radius:99px;overflow:hidden;margin:13px 0}
+.job-progress-fill{height:100%;background:#16a34a;border-radius:99px}
+.stage-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}.stage-box{background:#f3f4f6;border-radius:10px;padding:8px;text-align:center}.stage-num{font-size:18px;font-weight:800}.stage-name{font-size:10px;color:#6b7280}
+.detail-stat-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin:10px 0}.detail-stat{background:#f3f4f6;border-radius:10px;padding:10px}.detail-stat b{display:block;font-size:20px}.detail-stat span{font-size:11px;color:#6b7280}
+.pwa-nav{position:fixed;left:0;right:0;bottom:0;z-index:900;background:#111827;border-top:1px solid #374151;display:flex;justify-content:space-around;padding:7px 5px calc(7px + env(safe-area-inset-bottom))}
+.pwa-nav button{background:transparent;color:#d1d5db;font-size:11px;padding:7px 8px}.pwa-nav button.active{color:#fff;background:#374151}
+@media(min-width:650px){.stage-grid{grid-template-columns:repeat(6,1fr)}.detail-stat-grid{grid-template-columns:repeat(3,1fr)}}
+
+.job-stage-progress{margin:14px 0 8px}
+.job-stage-progress .step{font-size:12px;padding:8px 10px}
+.job-summary .job-progress-track{height:14px}
+
+.job-assignment{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0}
+.job-equipment-history{background:#f3f4f6;border-radius:10px;padding:10px;margin-top:10px}
+.job-equipment-history-title{font-weight:800;font-size:13px;margin-bottom:6px}
+.job-equipment-history-item{font-size:12px;padding:5px 0;border-bottom:1px solid #d1d5db}
+.job-equipment-history-item:last-child{border-bottom:0}
+
+.job-assignment>div{background:#f3f4f6;border-radius:10px;padding:9px}
+.nav{display:none!important}
+
+.multi-list{
+  background:#f3f4f6;
+  border-radius:12px;
+  padding:5px;
+  margin:6px 0 14px;
+}
+.multi-row{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  min-height:50px;
+  padding:10px;
+  border-bottom:1px solid #d1d5db;
+  cursor:pointer;
+  font-size:15px;
+}
+.multi-row:last-child{border-bottom:0}
+.multi-row input{
+  width:24px!important;
+  height:24px!important;
+  margin:0!important;
+  flex:0 0 24px;
+}
+.pwa-nav{
+  padding:10px 5px calc(10px + env(safe-area-inset-bottom))!important;
+}
+.pwa-nav button{
+  min-width:64px!important;
+  min-height:58px!important;
+  padding:8px 10px!important;
+  font-size:13px!important;
+}
+
+/* PHONE NAVIGATION: bottom only */
+main{padding-bottom:100px}
+.pwa-nav{
+ position:fixed!important;
+ left:0!important;right:0!important;bottom:0!important;
+ z-index:10000!important;
+ display:flex!important;
+ justify-content:space-around!important;
+ align-items:center!important;
+ background:#111827!important;
+ border-top:1px solid #374151!important;
+ padding:10px 5px calc(10px + env(safe-area-inset-bottom))!important;
+}
+.pwa-nav button{
+ min-width:64px!important;
+ min-height:58px!important;
+ padding:8px 10px!important;
+ font-size:13px!important;
+}
+
+/* REGENCY EVENTS THEME */
+:root{
+  --regency-green:#009b4d;
+  --regency-green-dark:#007a3d;
+  --regency-black:#111111;
+  --regency-grey:#f4f5f6;
+  --regency-border:#d9dde1;
+}
+body{background:var(--regency-grey);color:#161616}
+header{
+  background:#fff;
+  color:var(--regency-black);
+  padding:14px 16px 12px;
+  border-bottom:5px solid var(--regency-green);
+  box-shadow:0 1px 5px #0001;
+}
+.brand-logo{display:block;width:min(100%,520px);height:auto;max-height:105px;object-fit:contain;object-position:left center;margin:0 auto 5px}
+.brand-app{font-size:18px;font-weight:800;letter-spacing:.2px;margin-top:4px}
+.sub{color:#5f6368;opacity:1;font-size:12px;margin-top:2px}
+.card,.job-summary{border:1px solid var(--regency-border);box-shadow:0 2px 7px #0000000d}
+.card h2{color:#161616}
+button{background:var(--regency-green);color:#fff}
+button:hover{background:var(--regency-green-dark)}
+button.secondary{background:#e7eaed;color:#161616}
+button.green{background:var(--regency-green)!important}
+.badge{background:#d9f5e6;color:#086b38}
+.step.active{background:var(--regency-green);color:#fff}
+.step.done{background:#d9f5e6;color:#086b38}
+.job-progress-fill{background:var(--regency-green)}
+input:focus,select:focus{outline:2px solid #009b4d55;border-color:var(--regency-green)}
+.pwa-nav{background:var(--regency-black)!important;border-top:4px solid var(--regency-green)!important}
+.pwa-nav button.active{background:#2a2a2a;color:#fff}
+.pwa-nav button{color:#d7d7d7}
+.pwa-nav button{line-height:1.05}
+.empty{color:#666}
+
+.photo-thumb{width:76px;height:76px;object-fit:cover;border-radius:12px;border:1px solid #d1d5db;background:#eee;flex:0 0 76px}
+.photo-hero{width:100%;max-height:260px;object-fit:cover;border-radius:14px;margin:8px 0 12px;border:1px solid #d1d5db}
+.asset-id{display:inline-block;background:#111;color:#fff;border-left:4px solid var(--regency-green);padding:5px 8px;border-radius:5px;font-weight:800;letter-spacing:.4px;margin-top:4px}
+.section-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:2px 0 10px}
+.section-head h2{margin:0}
+.status-dot{display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--regency-green);margin-right:5px}
+.photo-input{padding:9px;background:#f3f4f6}
+
+.job-docs{margin:14px 0}.job-doc-list{display:grid;gap:8px}.job-doc{display:flex;align-items:center;gap:10px;background:#f3f4f6;border:1px solid #dbe1e8;border-radius:10px;padding:10px}.job-doc-icon{width:38px;height:38px;border-radius:9px;background:#fff;display:flex;align-items:center;justify-content:center;font-size:20px}.job-doc-info{flex:1;min-width:0}.job-doc-name{font-weight:750;word-break:break-word}.job-doc-meta{font-size:11px;color:#6b7280;margin-top:2px}.job-doc-actions{display:flex;gap:6px;flex-wrap:wrap}.job-doc-actions button{padding:8px 10px;font-size:12px}
+
+.portaloo-card{background:#fff;border:1px solid #d7dce2;border-radius:16px;padding:15px;margin:10px 0;box-shadow:0 1px 4px #0001}
+.portaloo-title{font-size:19px;font-weight:850}.portaloo-sub{font-size:12px;color:#6b7280;margin-top:3px}
+.portaloo-units{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin:10px 0}.portaloo-unit{background:#f3f4f6;border-radius:10px;padding:10px;text-align:center}.portaloo-unit b{display:block;font-size:24px}.portaloo-unit span{font-size:10px;color:#6b7280}
+.portaloo-stat-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin:10px 0}.portaloo-stat{background:#f3f4f6;border-radius:10px;padding:10px}.portaloo-stat b{display:block;font-size:19px}.portaloo-stat span{font-size:11px;color:#6b7280}
+.portaloo-service{background:#f3f4f6;border:1px solid #dbe1e8;border-radius:11px;padding:10px;margin:7px 0}.portaloo-service .meta{font-size:11px;color:#6b7280;margin-top:3px}.portaloo-notes{white-space:pre-wrap;background:#f8fafc;border:1px solid #e5e7eb;border-radius:10px;padding:10px;font-size:13px}
+.maps-btn{background:#fff!important;color:#111!important;border:1px solid #d1d5db!important}
+@media(max-width:430px){.portaloo-units{grid-template-columns:1fr 1fr}.portaloo-units .portaloo-unit:last-child{grid-column:span 2}}
+</style>
+</head>
+<body>
+<header><img class="brand-logo" src="regency-logo.png" alt="Regency Events Ltd"><div class="brand-app">AV Tracker</div><div class="sub">Equipment, AV jobs, Portaloo jobs, QR check-out & crew management</div></header>
+<main>
+<section id="dashboard"></section>
+<section id="equipment" class="hidden"></section>
+<section id="jobs" class="hidden"></section>
+<section id="portaloo" class="hidden"></section>
+<section id="scanner" class="hidden">
+<div class="card"><h2>Scan equipment</h2><div id="reader"></div><p class="muted">Allow camera access, then scan an AV Tracker QR code.</p><button class="secondary" onclick="stopScan();showPage('dashboard')">Close scanner</button></div>
+</section>
+</main>
+
+<nav class="pwa-nav">
+<button onclick="showPage('dashboard')">📊<br>Dashboard</button>
+<button onclick="showPage('equipment')">📦<br>Equipment</button>
+<button onclick="showPage('jobs')">🎪<br>AV Jobs</button>
+<button onclick="showPage('portaloo')">🚻<br>Portaloo</button>
+<button onclick="showPage('scanner')">📷<br>Scan</button>
+<button onclick="manageCrewVans()">👥🚐<br>Crews & Vans</button>
+</nav>
+
+<div id="modal" class="modal hidden" onclick="if(event.target===this)closeModal()">
+<div class="sheet" onclick="event.stopPropagation()">
+<button class="secondary close" onclick="closeModal()">Close</button>
+<div id="modalBody"></div>
+</div></div>
+
+<script>
+const KEY='avtracker_v1';
+let data;
+try{data=JSON.parse(localStorage.getItem(KEY)||'{"items":[],"jobs":[],"history":[],"users":[],"vans":[]}')}catch(e){data={items:[],jobs:[],history:[],users:[],vans:[]}}
+data.items=data.items||[];data.jobs=data.jobs||[];data.history=data.history||[];data.users=data.users||[];data.vans=data.vans||[];
+data.portalooJobs=data.portalooJobs||[];data.portalooJobs.forEach(j=>{j.unit1Name='Mondo';j.unit2Name='Maxim 3000';j.unit3Name='Tuffway';if(!j.what3words&&j.location)j.what3words=j.location;});data.portalooTypes=['Mondo','Maxim 3000','Tuffway'];
+data.jobs.forEach(j=>{
+  if(j.status==='Closed')j.status='Complete';
+  if(j.photo===undefined)j.photo='';
+  if(!j.progress)j.progress='Picked';
+  if(!Array.isArray(j.userIds))j.userIds=j.userId?[j.userId]:[];
+  if(!Array.isArray(j.vanIds))j.vanIds=j.vanId?[j.vanId]:[];
+});
+data.items.forEach(i=>{
+  if(i.photo===undefined)i.photo='';
+  if(i.userId===undefined)i.userId='';
+  if(i.vanId===undefined)i.vanId='';
+});
+data.vans.forEach(vn=>{if(vn.photo===undefined)vn.photo=''});
+let scanner=null;
+const progressSteps=['Picked','Loaded','Delivered','Setup','On Job','Returned'];
+function save(){localStorage.setItem(KEY,JSON.stringify(data))}
+
+// Job documents are stored in IndexedDB so PDFs and other files do not consume localStorage quota.
+const DOC_DB='avtracker_job_documents_v1';
+function openDocsDB(){return new Promise((resolve,reject)=>{if(!('indexedDB' in window))return reject(new Error('IndexedDB is not available on this device.'));const r=indexedDB.open(DOC_DB,1);r.onupgradeneeded=()=>{if(!r.result.objectStoreNames.contains('docs'))r.result.createObjectStore('docs',{keyPath:'id'});};r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error||new Error('Could not open document storage.'));});}
+async function putJobDocument(jobId,file){const db=await openDocsDB();const id=makeId('doc');const record={id,jobId,name:file.name,type:file.type||'application/octet-stream',size:file.size,blob:file,addedAt:new Date().toISOString()};await new Promise((resolve,reject)=>{const tx=db.transaction('docs','readwrite');tx.objectStore('docs').put(record);tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error||new Error('Could not save document.'));});db.close();return record;}
+async function listJobDocuments(jobId){const db=await openDocsDB();const all=await new Promise((resolve,reject)=>{const r=db.transaction('docs','readonly').objectStore('docs').getAll();r.onsuccess=()=>resolve(r.result||[]);r.onerror=()=>reject(r.error);});db.close();return all.filter(x=>x.jobId===jobId).sort((a,b)=>new Date(a.addedAt)-new Date(b.addedAt));}
+async function getJobDocument(docId){const db=await openDocsDB();const rec=await new Promise((resolve,reject)=>{const r=db.transaction('docs','readonly').objectStore('docs').get(docId);r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);});db.close();return rec;}
+async function removeJobDocument(docId){const db=await openDocsDB();await new Promise((resolve,reject)=>{const tx=db.transaction('docs','readwrite');tx.objectStore('docs').delete(docId);tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error||new Error('Could not delete document.'));});db.close();}
+function formatFileSize(bytes){if(bytes<1024)return bytes+' B';if(bytes<1024*1024)return (bytes/1024).toFixed(1)+' KB';return (bytes/(1024*1024)).toFixed(1)+' MB'}
+function docIcon(type,name){const n=(name||'').toLowerCase();if(type==='application/pdf'||n.endsWith('.pdf'))return '📄';if(n.match(/\.(doc|docx)$/))return '📝';if(n.match(/\.(xls|xlsx|csv)$/))return '📊';if(type.startsWith('image/'))return '🖼️';return '📎'}
+async function renderJobDocuments(jobId){
+ const box=document.getElementById('jobDocumentsList');
+ if(!box)return;
+ box.innerHTML='<div class="muted">Loading documents…</div>';
+ try{
+  const docs=await listJobDocuments(jobId);
+  if(!docs.length){box.innerHTML='<div class="card empty">No documents attached to this job yet.</div>';return;}
+  box.innerHTML='<div class="job-doc-list">'+docs.map(d=>
+   '<div class="job-doc"><div class="job-doc-icon">'+docIcon(d.type,d.name)+'</div>'+
+   '<div class="job-doc-info"><div class="job-doc-name">'+esc(d.name)+'</div><div class="job-doc-meta">'+formatFileSize(d.size)+' • '+new Date(d.addedAt).toLocaleString()+'</div></div>'+
+   '<div class="job-doc-actions"><button class="secondary" onclick="openJobDocument(\''+d.id+'\')">Open</button><button class="danger" onclick="deleteJobDocument(\''+d.id+'\',\''+jobId+'\')">Delete</button></div></div>'
+  ).join('')+'</div>';
+ }catch(e){box.innerHTML='<div class="muted">Document storage is not available on this device.</div>';}
+}
+async function uploadJobDocuments(jobId,input){const files=[...(input?.files||[])];if(!files.length)return;const maxBytes=25*1024*1024;let added=0;for(const file of files){if(file.size>maxBytes){alert(`${file.name} is larger than 25 MB and was not added.`);continue;}try{await putJobDocument(jobId,file);added++;}catch(e){alert('Could not save '+file.name+'. Your browser may be out of storage.');break;}}input.value='';await renderJobDocuments(jobId);if(added)renderJobs();}
+async function openJobDocument(docId){try{const d=await getJobDocument(docId);if(!d)return;const url=URL.createObjectURL(d.blob);const w=window.open(url,'_blank');if(!w){const a=document.createElement('a');a.href=url;a.download=d.name;a.click();}setTimeout(()=>URL.revokeObjectURL(url),60000);}catch(e){alert('Could not open this document.');}}
+async function deleteJobDocument(docId,jobId){if(!confirm('Delete this document from the job?'))return;try{await removeJobDocument(docId);await renderJobDocuments(jobId);}catch(e){alert('Could not delete the document.');}}
+async function deleteAllJobDocuments(jobId){try{const docs=await listJobDocuments(jobId);for(const d of docs)await removeJobDocument(d.id);}catch(e){}}
+function v(x){return document.getElementById(x)?.value?.trim()||''}
+function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
+function makeId(p){return p+'-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,6)}
+async function photoFromInput(id){
+ const file=document.getElementById(id)?.files?.[0];if(!file)return '';
+ return await new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>{const im=new Image();im.onload=()=>{const max=900,scale=Math.min(1,max/Math.max(im.width,im.height));const c=document.createElement('canvas');c.width=Math.round(im.width*scale);c.height=Math.round(im.height*scale);c.getContext('2d').drawImage(im,0,0,c.width,c.height);resolve(c.toDataURL('image/jpeg',.72))};im.onerror=reject;im.src=r.result};r.onerror=reject;r.readAsDataURL(file)});
+}
+function photoHtml(src,cls='photo-thumb'){return src?`<img class="${cls}" src="${src}" alt="Photo">`:''}
+function userName(id){return (data.users.find(x=>x.id===id)||{}).name||'Unassigned'}
+
+function jobCrewText(j){
+  const a=(j.userIds||[]).map(userName).filter(x=>x!=='Unassigned');
+  return a.length?a.join(', '):'Unassigned';
+}
+function jobVanText(j){
+  const a=(j.vanIds||[]).map(vanName).filter(x=>x!=='Unassigned');
+  return a.length?a.join(', '):'Unassigned';
+}
+function vanName(id){return (data.vans.find(x=>x.id===id)||{}).name||'Unassigned'}
+function currentStep(x){return Math.max(0,progressSteps.indexOf(x.progress||'Picked'))}
+function progressBar(x){let n=currentStep(x);return '<div class="progress">'+progressSteps.map((s,i)=>`<span class="step ${i===n?'active':i<n?'done':''}" onclick="setProgress('${x.id}','${s}')">${s}</span>`).join('')+'</div>'}
+
+function showPage(page){
+ ['dashboard','equipment','jobs','portaloo','scanner'].forEach(id=>{
+   const el=document.getElementById(id);
+   if(el)el.classList.toggle('hidden',id!==page);
+ });
+ if(page==='scanner')startScan();else stopScan();
+ render();
+ window.scrollTo({top:0,behavior:'smooth'});
+}
+function render(){renderDash();renderEquipment();renderJobs();renderPortaloo()}
+
+function renderDash(){
+ const total=data.items.length,avail=data.items.filter(x=>x.status==='Available').length;
+ document.getElementById('dashboard').innerHTML=`
+ <div class="grid">
+  <div class="card"><b>${total}</b><div class="muted">Total items</div></div>
+  <div class="card"><b>${avail}</b><div class="muted">Available</div></div>
+  <div class="card"><b>${total-avail}</b><div class="muted">Out</div></div>
+  <div class="card"><b>${data.jobs.filter(j=>j.status==='Open').length}</b><div class="muted">Open jobs</div></div>
+ </div>
+ <div class="card"><h2>Recent activity</h2>${recent()}</div>`;
+}
+function recent(){let h=data.history.slice(-8).reverse();return h.length?h.map(x=>`<div style="padding:9px 0;border-bottom:1px solid #eee"><b>${esc(x.itemName)}</b> <span class="muted">${esc(x.action)}</span><br><span class="small">${new Date(x.at).toLocaleString()}${x.job?' • '+esc(x.job):''}</span></div>`).join(''):'<div class="empty">No activity yet.</div>'}
+
+function renderEquipment(){
+ const el=document.getElementById('equipment'),q=document.getElementById('eqSearch')?.value||'';
+ const items=data.items.filter(x=>(x.name+' '+x.asset+' '+x.category+' '+x.status).toLowerCase().includes(q.toLowerCase()));
+ el.innerHTML=`<div class="card"><div class="section-head"><h2>Equipment</h2><button onclick="newItem()">＋ Add equipment</button></div><input id="eqSearch" placeholder="Search equipment, ID or category" value="${esc(q)}" oninput="renderEquipment()"></div>${items.length?items.map(itemCard).join(''):'<div class="card empty">No equipment yet.<br>Add your first speaker, amp rack, flight case, cable etc.</div>'}`;
+}
+function itemCard(x){return `<div class="card"><div class="row">${photoHtml(x.photo)}<div style="flex:1"><b>${esc(x.name)}</b><div class="asset-id">${esc(x.asset)}</div><div class="muted" style="margin-top:5px">${esc(x.category)}</div></div><span class="badge ${x.status==='Out'?'out':''}"><span class="status-dot"></span>${esc(x.status)}</span></div>${x.job?`<div class="muted" style="margin-top:8px">🎪 ${esc(x.job)}</div>`:''}<div class="actions"><button onclick="viewItem('${x.id}')">View</button><button class="secondary" onclick="showQR('${x.id}')">QR</button>${x.status==='Out'?`<button class="green" onclick="returnItem('${x.id}')">Return</button>`:`<button class="secondary" onclick="checkout('${x.id}')">Add to job</button>`}</div></div>`}
+
+function jobProgressBar(j){
+ const n=Math.max(0,progressSteps.indexOf(j.progress||'Picked'));
+ return '<div class="progress job-stage-progress">'+progressSteps.map((s,i)=>
+   `<span class="step ${i===n?'active':i<n?'done':''}" onclick="setJobProgress('${j.id}','${s}')">${s}</span>`
+ ).join('')+'</div>';
+}
+
+function renderJobs(){
+ const el=document.getElementById('jobs');
+ const head=`<div class="card"><div class="section-head"><h2>Jobs</h2><button onclick="newJob()">＋ Create job</button></div><div class="muted">Build manifests, assign crew and vans, and track the whole job.</div></div>`;
+ if(!data.jobs.length){el.innerHTML=head+'<div class="card empty">No jobs yet.<br>Tap <b>Create job</b> to get started.</div>';return;}
+ const active=data.jobs.filter(j=>j.status!=='Complete').slice().reverse();
+ const completed=data.jobs.filter(j=>j.status==='Complete').slice().reverse();
+ const card=j=>{
+   const items=data.items.filter(i=>i.jobId===j.id),total=items.length;
+   const isComplete=j.status==='Complete';
+   const history=j.equipmentHistory||[];
+   const used=[]; const seen=new Set();
+   history.forEach(run=>(run.items||[]).forEach(i=>{const key=i.id||i.asset||i.name;if(!seen.has(key)){seen.add(key);used.push(i)}}));
+   const historyHtml=used.length?`<div class="job-equipment-history"><div class="job-equipment-history-title">Equipment used on this job</div>${used.map(i=>`<div class="job-equipment-history-item"><b>${esc(i.name)}</b> <span class="muted">${esc(i.asset||'')}</span></div>`).join('')}</div>`:'';
+   return `<div class="job-summary ${isComplete?'job-complete':''}"><div class="row">${photoHtml(j.photo)}<div style="flex:1"><div class="job-summary-title">${esc(j.name)}</div><div class="job-summary-sub">${esc(j.date||'')} • ${esc(j.status)} • ${isComplete?used.length+' item'+(used.length===1?'':'s')+' used':total+' item'+(total===1?'':'s')+' currently attached'}</div></div><span class="badge ${isComplete?'complete':''}">${esc(j.status)}</span></div><div class="job-assignment"><div><span class="small">CREW</span><br><b>👤 ${esc(jobCrewText(j))}</b></div><div><span class="small">VANS</span><br><b>🚐 ${esc(jobVanText(j))}</b></div></div>${historyHtml}<div class="actions"><button onclick="viewJob('${j.id}')">Open Job</button>${isComplete?`<button class="secondary" onclick="reopenJob('${j.id}')">Reopen Job</button>`:`<button class="green" onclick="completeJob('${j.id}')">Complete Job</button>`}<button class="danger" onclick="deleteJob('${j.id}')">Delete Job</button></div></div>`;
+ };
+ let html=head;
+ if(active.length)html+=active.map(card).join('');
+ if(completed.length)html+=`<div class="completed-heading"><h2>Completed Jobs</h2><div class="muted">Completed jobs are kept here for reference and can be reopened if needed.</div></div>`+completed.map(card).join('');
+ el.innerHTML=html;
+}
+
+function setJobProgress(jobId,step){
+ const j=data.jobs.find(x=>x.id===jobId);
+ if(!j)return;
+ j.progress=step;
+ data.history.push({itemName:j.name,action:'Job progress changed',job:j.name,progress:step,at:new Date().toISOString()});
+ save();
+ render();
+}
+
+function openModal(body){document.getElementById('modalBody').innerHTML=body;document.getElementById('modal').classList.remove('hidden')}
+function closeModal(){document.getElementById('modal').classList.add('hidden')}
+function newItem(){openModal(`<h2>Add equipment</h2><label>Photo</label><input class="photo-input" id="f_photo" type="file" accept="image/*" capture="environment"><label>Name / model</label><input id="f_name" placeholder="JBL PRX812"><label>Asset ID</label><input id="f_asset" placeholder="SPK-001"><label>Category</label><input id="f_cat" placeholder="Speaker"><label>Serial number</label><input id="f_serial"><label>Location</label><input id="f_loc" value="Warehouse"><button onclick="addItem()">Create item</button>`)}
+async function addItem(){const name=v('f_name');if(!name)return alert('Enter equipment name');const photo=await photoFromInput('f_photo');const x={id:makeId('item'),name,asset:v('f_asset')||makeId('AV'),category:v('f_cat')||'Equipment',serial:v('f_serial'),location:v('f_loc')||'Warehouse',photo,status:'Available',jobId:null,job:null,userId:'',vanId:'',progress:null};data.items.push(x);data.history.push({itemId:x.id,itemName:x.name,action:'Added',at:new Date().toISOString()});save();closeModal();showPage('equipment')}
+function newJob(){
+ openModal(`<h2>New job</h2>
+ <label>Job photo</label>
+ <input class="photo-input" id="j_photo" type="file" accept="image/*" capture="environment">
+ <label>Job name</label>
+ <input id="j_name" placeholder="Festival A">
+ <label>Date</label>
+ <input id="j_date" type="date" value="${new Date().toISOString().slice(0,10)}">
+
+ <label>Crew members</label>
+ <div class="multi-list">
+ ${data.users.length ? data.users.map(u=>`<label class="multi-row">
+   <input class="new-job-user" type="checkbox" value="${u.id}">
+   <span>${esc(u.name)}</span>
+ </label>`).join('') : '<div class="muted">No crew members added yet.</div>'}
+ </div>
+
+ <label>Vans</label>
+ <div class="multi-list">
+ ${data.vans.length ? data.vans.map(vn=>`<label class="multi-row">
+   <input class="new-job-van" type="checkbox" value="${vn.id}">
+   <span>${esc(vn.name)}</span>
+ </label>`).join('') : '<div class="muted">No vans added yet.</div>'}
+ </div>
+
+ <button onclick="addJob()">Create job</button>`);
+}
+async function addJob(){
+ const name=v('j_name');
+ if(!name)return alert('Enter a job name');
+ const photo=await photoFromInput('j_photo');
+ const userIds=[...document.querySelectorAll('.new-job-user:checked')].map(x=>x.value);
+ const vanIds=[...document.querySelectorAll('.new-job-van:checked')].map(x=>x.value);
+ data.jobs.push({
+   id:makeId('job'),name,date:v('j_date'),status:'Open',
+   progress:'Picked',userIds,vanIds,photo
+ });
+ save();closeModal();showPage('jobs');
+}
+function checkout(itemId){
+ const open=data.jobs.filter(j=>j.status==='Open');
+ if(!open.length)return alert('Create an open job first.');
+ openModal(`<h2>Add to job</h2>
+ <p><b>${esc(data.items.find(x=>x.id===itemId).name)}</b></p>
+ <label>Job</label><select id="jobSelect">${open.map(j=>`<option value="${j.id}">${esc(j.name)}</option>`).join('')}</select>
+ <button onclick="doCheckout('${itemId}')">Add to job</button>`);
+}
+function doCheckout(itemId){
+ const x=data.items.find(i=>i.id===itemId),j=data.jobs.find(j=>j.id===v('jobSelect'));
+ if(!x||!j)return;
+ x.status='Out';x.jobId=j.id;x.job=j.name;x.location=j.name;x.progress=null;x.userId='';x.vanId='';
+ data.history.push({itemId:x.id,itemName:x.name,action:'Added to job',job:j.name,at:new Date().toISOString()});
+ save();closeModal();render();
+}
+function setProgress(itemId,step){/* Job-level progress only. */}
+function returnItem(itemId){const x=data.items.find(i=>i.id===itemId);if(!x)return;x.status='Available';x.location='Warehouse';x.progress='Returned';x.jobId=null;x.job=null;x.userId='';x.vanId='';data.history.push({itemId:x.id,itemName:x.name,action:'Returned',progress:'Returned',at:new Date().toISOString()});save();render()}
+function viewItem(itemId){const x=data.items.find(i=>i.id===itemId);if(!x)return;openModal(`<h2>${esc(x.name)}</h2>${photoHtml(x.photo,'photo-hero')}<p><span class="asset-id">${esc(x.asset)}</span><br>${esc(x.category)}${x.serial?' • S/N '+esc(x.serial):''}</p><p>Status: <b>${esc(x.status)}</b><br>Location: ${esc(x.location)}</p><div class="actions">${x.status==='Out'?`<button class="green" onclick="closeModal();returnItem('${x.id}')">Return</button>`:`<button onclick="closeModal();checkout('${x.id}')">Check out</button>`}</div>`)}
+function manageCrewVans(){openModal(`<h2>Crews & Vans</h2>
+ <h3 style="margin:18px 0 8px">Crew members</h3>
+ <input id="new_user" placeholder="Crew member name">
+ <button onclick="addUser()">＋ Add crew member</button>
+ <div style="margin-top:12px">${data.users.map(u=>`<div class="card"><div class="row"><span>${esc(u.name)}</span><button class="danger" onclick="deleteUser('${u.id}')">Delete</button></div></div>`).join('')||'<p class="muted">No crew members yet.</p>'}</div>
+ <h3 style="margin:22px 0 8px">Vans</h3>
+ <label>Van photo</label>
+ <input class="photo-input" id="new_van_photo" type="file" accept="image/*" capture="environment">
+ <label>Van name</label>
+ <input id="new_van" placeholder="Mercedes Sprinter / LWB Transit">
+ <button onclick="addVan()">＋ Add van</button>
+ <div style="margin-top:12px">${data.vans.map(vn=>`<div class="card"><div class="row">${photoHtml(vn.photo)}<div style="flex:1"><b>${esc(vn.name)}</b></div><button class="danger" onclick="deleteVan('${vn.id}')">Delete</button></div></div>`).join('')||'<p class="muted">No vans yet.</p>'}</div>`)}
+function addUser(){const name=v('new_user');if(!name)return alert('Enter crew member name');data.users.push({id:makeId('user'),name});save();manageCrewVans()}
+function deleteUser(uid){data.users=data.users.filter(u=>u.id!==uid);data.jobs.forEach(j=>{j.userIds=(j.userIds||[]).filter(id=>id!==uid)});save();manageCrewVans()}
+async function addVan(){const name=v('new_van');if(!name)return alert('Enter van name');const photo=await photoFromInput('new_van_photo');data.vans.push({id:makeId('van'),name,photo});save();manageCrewVans()}
+function deleteVan(vid){data.vans=data.vans.filter(x=>x.id!==vid);data.jobs.forEach(j=>{j.vanIds=(j.vanIds||[]).filter(id=>id!==vid)});save();manageCrewVans()}
+function jobEquipmentHistoryHtml(j){
+ const history=j.equipmentHistory||[];
+ if(!history.length)return '';
+ return `<div class="job-equipment-history"><div class="job-equipment-history-title">Equipment used on this job</div>${history.slice().reverse().map((run,idx)=>`<div style="margin-top:${idx?'10px':'0'}"><div class="small"><b>Completion ${history.length-idx}</b> • ${new Date(run.completedAt||Date.now()).toLocaleString()}</div>${(run.items||[]).map(i=>`<div class="job-equipment-history-item"><b>${esc(i.name)}</b> <span class="muted">${esc(i.asset||'')} • ${esc(i.category||'')}</span></div>`).join('')}</div>`).join('')}</div>`;
+}
+function viewJob(jobId){
+ const j=data.jobs.find(x=>x.id===jobId),items=data.items.filter(x=>x.jobId===jobId);
+ if(!j)return;
+ const n=Math.max(0,progressSteps.indexOf(j.progress||'Picked'));
+ const pct=Math.round((n/(progressSteps.length-1))*100);
+ openModal(`<h2>${esc(j.name)}</h2>
+ ${photoHtml(j.photo,'photo-hero')}<p class="muted">${esc(j.date||'')} • ${esc(j.status)} • ${items.length} item${items.length===1?'':'s'}</p>
+ <div class="job-summary">
+   <div class="row"><b>Job progress</b><span class="badge">${esc(j.progress||'Picked')}</span></div>
+   <div class="job-assignment">
+     <div><span class="small">CREW</span><br><b>👤 ${esc(jobCrewText(j))}</b></div>
+     <div><span class="small">VAN</span><br><b>🚐 ${esc(jobVanText(j))}</b></div>
+   </div>
+   <div class="job-progress-track"><div class="job-progress-fill" style="width:${pct}%"></div></div>
+   ${jobProgressBar(j)}
+   ${j.status==='Open'?`<button style="width:100%;font-size:15px;padding:13px;margin-top:8px" onclick="editJobAssignment('${j.id}')">👤 Assign Crew &nbsp; 🚐 Assign Van</button>`:''}
+ </div>
+ ${j.status==='Open'?`<button style="width:100%;font-size:16px;padding:14px;margin:12px 0" onclick="closeModal();addItemsToJob('${j.id}')">＋ Add equipment to this job</button>`:''}
+ <h3>${j.status==='Complete'?'Equipment history':'Job equipment'}</h3>
+ ${items.length?items.map(i=>`<div class="card">
+   <div class="row"><div><b>${esc(i.name)}</b><div class="muted">${esc(i.asset)}</div></div><span class="badge">${esc(i.status)}</span></div>
+   <div class="actions"><button class="secondary" onclick="removeFromJob('${i.id}')">Remove from job</button></div>
+ </div>`).join(''):(j.status==='Open'?'<div class="card empty">No equipment has been added yet.<br>Use the button above to build the job.</div>':'<div class="card empty">All equipment has been returned to the warehouse. See the equipment history below.</div>')}
+ ${jobEquipmentHistoryHtml(j)}
+ <div class="job-docs">
+   <div class="section-head"><h3 style="margin:0">Job documents</h3></div>
+   ${j.status==='Open'?`<label class="secondary" style="display:block;text-align:center;padding:12px;border-radius:10px;font-weight:700;cursor:pointer">＋ Attach documents<input id="jobDocInput_${j.id}" type="file" multiple accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.txt,.jpg,.jpeg,.png,.webp,application/pdf" style="display:none" onchange="uploadJobDocuments('${j.id}',this)"></label>`:''}
+   <div id="jobDocumentsList" class="job-doc-list"><div class="muted">Loading documents…</div></div>
+ </div>
+ ${j.status==='Open'?`<button class="green" style="width:100%;font-size:15px;padding:13px;margin-top:8px" onclick="completeJob('${j.id}')">Complete job</button>`:`<button class="secondary" style="width:100%;font-size:15px;padding:13px;margin-top:8px" onclick="reopenJob('${j.id}')">Reopen job</button>`}
+ <button class="danger" style="width:100%;font-size:15px;padding:13px;margin-top:8px" onclick="deleteJob('${j.id}')">Delete job</button>`);
+ renderJobDocuments(j.id);
+}
+
+function editJobAssignment(jobId){
+ const j=data.jobs.find(x=>x.id===jobId);
+ if(!j)return;
+ const users=j.userIds||[];
+ const vans=j.vanIds||[];
+ openModal(`<h2>Assign crew & vans</h2>
+ <p><b>${esc(j.name)}</b></p>
+
+ <label>Crew members</label>
+ <div class="multi-list">
+ ${data.users.length ? data.users.map(u=>`<label class="multi-row">
+   <input class="edit-job-user" type="checkbox" value="${u.id}" ${users.includes(u.id)?'checked':''}>
+   <span>${esc(u.name)}</span>
+ </label>`).join('') : '<div class="muted">No crew members added yet.</div>'}
+ </div>
+
+ <label>Vans</label>
+ <div class="multi-list">
+ ${data.vans.length ? data.vans.map(vn=>`<label class="multi-row">
+   <input class="edit-job-van" type="checkbox" value="${vn.id}" ${vans.includes(vn.id)?'checked':''}>
+   <span>${esc(vn.name)}</span>
+ </label>`).join('') : '<div class="muted">No vans added yet.</div>'}
+ </div>
+
+ <button onclick="saveJobAssignment('${j.id}')">Save assignment</button>`);
+}
+
+function saveJobAssignment(jobId){
+ const j=data.jobs.find(x=>x.id===jobId);
+ if(!j)return;
+ j.userIds=[...document.querySelectorAll('.edit-job-user:checked')].map(x=>x.value);
+ j.vanIds=[...document.querySelectorAll('.edit-job-van:checked')].map(x=>x.value);
+ save();closeModal();render();
+}
+function addItemsToJob(jobId){
+ const j=data.jobs.find(x=>x.id===jobId);
+ if(!j||j.status!=='Open')return alert('This job is closed.');
+ const available=data.items.filter(x=>x.status==='Available'&&!x.jobId);
+ if(!available.length)return alert('No available equipment. Add equipment first, or return equipment from another job.');
+ openModal(`<h2>Add equipment to ${esc(j.name)}</h2><p class="muted">Select one or more items. They will start at <b>Picked</b>.</p><input id="jobItemSearch" placeholder="Search equipment or asset ID" oninput="filterJobItems()"><label style="display:flex;align-items:center;gap:8px;margin:8px 0;font-size:13px"><input id="selectAllJobItems" type="checkbox" style="width:20px;height:20px;margin:0" onchange="toggleAllJobItems(this.checked)"> Select all visible</label><div id="jobItemList">${jobItemListHtml(available)}</div><button onclick="assignSelectedItems('${j.id}')">Add selected equipment</button>`);
+}
+function jobItemListHtml(items){
+ if(!items.length)return '<p class="muted">No matching equipment.</p>';
+ return items.map(x=>`<label style="display:flex;align-items:center;gap:10px;background:#f3f4f6;padding:11px;border-radius:10px;margin:6px 0;cursor:pointer"><input class="job-item-check" type="checkbox" value="${x.id}" style="width:20px;height:20px;margin:0"><span><b>${esc(x.name)}</b><br><span class="small">${esc(x.asset)} • ${esc(x.category)}</span></span></label>`).join('');
+}
+function filterJobItems(){
+ const q=(document.getElementById('jobItemSearch')?.value||'').toLowerCase();
+ const items=data.items.filter(x=>x.status==='Available'&&!x.jobId&&(x.name+' '+x.asset+' '+x.category).toLowerCase().includes(q));
+ const el=document.getElementById('jobItemList');if(el)el.innerHTML=jobItemListHtml(items);
+}
+function toggleAllJobItems(checked){document.querySelectorAll('.job-item-check').forEach(x=>x.checked=checked)}
+function assignSelectedItems(jobId){
+ const j=data.jobs.find(x=>x.id===jobId);if(!j)return;
+ const checks=[...document.querySelectorAll('.job-item-check:checked')];
+ if(!checks.length)return alert('Select at least one item.');
+ let count=0;
+ checks.forEach(ch=>{
+  const x=data.items.find(i=>i.id===ch.value);
+  if(!x||x.status!=='Available'||x.jobId)return;
+  x.status='Out';x.jobId=j.id;x.job=j.name;x.location=j.name;x.progress=null;x.userId='';x.vanId='';
+  data.history.push({itemId:x.id,itemName:x.name,action:'Added to job',job:j.name,progress:'Picked',at:new Date().toISOString()});count++;
+ });
+ save();closeModal();render();
+}
+function removeFromJob(itemId){
+ const x=data.items.find(i=>i.id===itemId);if(!x||!x.jobId)return;
+ const job=x.job;
+ x.status='Available';x.location='Warehouse';x.jobId=null;x.job=null;x.progress=null;x.userId='';x.vanId='';
+ data.history.push({itemId:x.id,itemName:x.name,action:'Removed from job',job:job,at:new Date().toISOString()});
+ save();closeModal();render();
+}
+function completeJob(jobId){
+ const j=data.jobs.find(x=>x.id===jobId);if(!j)return;
+ const attached=data.items.filter(x=>x.jobId===jobId);
+ const n=attached.length;
+ openModal(`<h2>Complete job?</h2><p>Are you sure you want to mark <b>${esc(j.name)}</b> as complete?</p>${n?`<p><b>${n}</b> piece${n===1?'':'s'} of equipment will be returned to the warehouse.</p><p class="muted">The equipment will remain recorded in the job's history so you can see exactly what was used.</p>`:'<p class="muted">There is no equipment currently attached to this job.</p>'}<div class="actions" style="margin-top:16px"><button class="secondary" onclick="closeModal()">Cancel</button><button class="green" onclick="confirmCompleteJob('${j.id}')">Yes, complete job</button></div>`);
+}
+function confirmCompleteJob(jobId){
+ const j=data.jobs.find(x=>x.id===jobId);if(!j)return;
+ const attached=data.items.filter(x=>x.jobId===jobId);
+ if(!j.equipmentHistory)j.equipmentHistory=[];
+ if(attached.length){
+   j.equipmentHistory.push({completedAt:new Date().toISOString(),items:attached.map(x=>({id:x.id,name:x.name,asset:x.asset,category:x.category,serial:x.serial}))});
+ }
+ attached.forEach(x=>{
+   x.status='Available';x.location='Warehouse';x.jobId=null;x.job=null;x.progress='Returned';x.userId='';x.vanId='';
+   data.history.push({itemId:x.id,itemName:x.name,action:'Returned on job completion',job:j.name,progress:'Returned',at:new Date().toISOString()});
+ });
+ j.status='Complete';j.progress='Returned';j.completedAt=new Date().toISOString();
+ data.history.push({itemName:j.name,action:'Job completed',job:j.name,at:new Date().toISOString()});
+ save();closeModal();render();
+}
+function reopenJob(jobId){
+ const j=data.jobs.find(x=>x.id===jobId);if(!j)return;
+ j.status='Open';
+ data.history.push({itemName:j.name,action:'Job reopened',job:j.name,at:new Date().toISOString()});
+ save();render();
+}
+// Backwards-compatible alias for older buttons/code.
+function closeJob(jobId){completeJob(jobId)}
+function deleteJob(jobId){
+ const j=data.jobs.find(x=>x.id===jobId);
+ if(!j)return;
+ const items=data.items.filter(i=>i.jobId===jobId);
+ openModal(`<h2>Delete job?</h2>
+   <p>Are you sure you want to delete <b>${esc(j.name)}</b>?</p>
+   ${items.length?`<p class="muted"><b>${items.length}</b> piece${items.length===1?'':'s'} of equipment are still attached to this job. They will be returned to <b>Available / Warehouse</b>.</p>`:'<p class="muted">This job has no equipment attached.</p>'}
+   <div class="actions" style="margin-top:16px">
+    <button class="secondary" onclick="closeModal()">Cancel</button>
+    <button class="danger" onclick="confirmDeleteJob('${j.id}')">Yes, delete job</button>
+   </div>`);
+}
+function confirmDeleteJob(jobId){
+ const j=data.jobs.find(x=>x.id===jobId);
+ if(!j)return;
+ const attached=data.items.filter(i=>i.jobId===jobId);
+ attached.forEach(x=>{
+   x.status='Available';
+   x.location='Warehouse';
+   x.jobId=null;
+   x.job=null;
+   x.progress=null;
+   x.userId='';
+   x.vanId='';
+ });
+ data.history.push({itemName:j.name,action:'Job deleted',job:j.name,at:new Date().toISOString()});
+ data.jobs=data.jobs.filter(x=>x.id!==jobId);
+ deleteAllJobDocuments(jobId);
+ save();
+ closeModal();
+ showPage('jobs');
+}
+
+
+function portalooCrewText(j){
+ const a=(j.userIds||[]).map(userName).filter(x=>x!=='Unassigned');
+ return a.length?a.join(', '):'Unassigned';
+}
+function portalooUnitTotal(j){return (Number(j.unit1)||0)+(Number(j.unit2)||0)+(Number(j.unit3)||0)}
+function portalooStatusBadge(status){return `<span class="badge ${status==='Complete'?'out':''}">${esc(status)}</span>`}
+function portalooDateText(j){
+ if(j.rolling)return `${esc(j.startDate||'')} • Rolling`; 
+ if(j.endDate)return `${esc(j.startDate||'')} → ${esc(j.endDate)}`;
+ return `${esc(j.startDate||'')} • Ongoing`;
+}
+function mapsUrl(address){return 'https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(address||'')}
+function renderPortaloo(){
+ const el=document.getElementById('portaloo'); if(!el)return;
+ const jobs=data.portalooJobs||[];
+ const active=jobs.filter(j=>j.status!=='Complete').length;
+ const units=jobs.filter(j=>j.status!=='Complete').reduce((n,j)=>n+portalooUnitTotal(j),0);
+ const services=jobs.reduce((n,j)=>n+(j.services||[]).length,0);
+ const head=`<div class="card"><div class="section-head"><h2>Portaloo Jobs</h2><div class="actions" style="margin-top:0"><button onclick="newPortalooJob()">＋ Create job</button></div></div><div class="muted">Manage toilet hire, servicing, customers and site details.</div></div>\n <div class="portaloo-stat-grid"><div class="portaloo-stat"><b>${active}</b><span>Active jobs</span></div><div class="portaloo-stat"><b>${units}</b><span>Units out</span></div><div class="portaloo-stat"><b>${services}</b><span>Services logged</span></div><div class="portaloo-stat"><b>${jobs.length}</b><span>Total jobs</span></div></div>`;
+ if(!jobs.length){el.innerHTML=head+'<div class="card empty">No Portaloo jobs yet.<br>Tap <b>Create job</b> to get started.</div>';return;}
+ const activeJobs=jobs.filter(j=>j.status!=='Complete').slice().reverse();
+ const completedJobs=jobs.filter(j=>j.status==='Complete').slice().reverse();
+ let html=head;
+ if(activeJobs.length)html+=activeJobs.map(portalooCard).join('');
+ if(completedJobs.length)html+=`<div class="completed-heading"><h2>Completed Portaloo Jobs</h2><div class="muted">Completed jobs are kept here for reference and can be reopened if needed.</div></div>`+completedJobs.map(portalooCard).join('');
+ el.innerHTML=html;
+}
+function portalooCard(j){
+ return `<div class="portaloo-card">
+  <div class="row"><div><div class="portaloo-title">${esc(j.name)}</div><div class="portaloo-sub">${portalooDateText(j)} • ${esc(j.status)}</div></div>${portalooStatusBadge(j.status)}</div>
+  <div class="portaloo-units"><div class="portaloo-unit"><b>${Number(j.unit1)||0}</b><span>${esc(j.unit1Name||'Mondo')}</span></div><div class="portaloo-unit"><b>${Number(j.unit2)||0}</b><span>${esc(j.unit2Name||'Maxim 3000')}</span></div><div class="portaloo-unit"><b>${Number(j.unit3)||0}</b><span>${esc(j.unit3Name||'Tuffway')}</span></div></div>
+  <div class="muted">📍 ${esc(j.location||'No location')}<br>👤 ${esc(portalooCrewText(j))}<br>🏢 ${esc(j.customer?.company||j.customer?.name||'No customer')}</div>
+  <div class="actions"><button class="green" onclick="viewPortalooJob('${j.id}')">Open Job</button>${j.status==='Complete'?`<button class="secondary" onclick="reopenPortalooJob('${j.id}')">Reopen Job</button>`:`<button class="green" onclick="completePortalooJob('${j.id}')">Complete Job</button>`}<button class="danger" onclick="deletePortalooJob('${j.id}')">Delete Job</button></div>
+ </div>`;
+}
+function portalooTypes(){return ['Mondo','Maxim 3000','Tuffway']}
+
+function newPortalooJob(){
+ openModal(`<h2>New Portaloo job</h2>
+ <label>Job / site name</label><input id="p_name" placeholder="Summer Festival">
+ <label>What3words location</label><input id="p_location" placeholder="///filled.count.soap">
+ <button class="maps-btn" type="button" onclick="openWhat3WordsFor('p_location')">📍 Open in What3words</button>
+ <label>Start date</label><input id="p_start" type="date" value="${new Date().toISOString().slice(0,10)}">
+ <label style="display:flex;align-items:center;gap:9px;margin:4px 0 10px"><input id="p_rolling" type="checkbox" style="width:22px;height:22px;margin:0" onchange="document.getElementById('p_end').disabled=this.checked"> Rolling / no fixed end date</label>
+ <label>End date</label><input id="p_end" type="date">
+ <h3>Units required</h3>
+ <label id="p_unit1_label">Mondo</label><input id="p_unit1" type="number" min="0" value="0">
+ <label id="p_unit2_label">Maxim 3000</label><input id="p_unit2" type="number" min="0" value="0">
+ <label id="p_unit3_label">Tuffway</label><input id="p_unit3" type="number" min="0" value="0">
+ <p class="small">Portaloo unit types: Mondo, Maxim 3000 and Tuffway.</p>
+ <h3>Customer</h3>
+ <label>Customer / contact name</label><input id="p_customer_name">
+ <label>Company</label><input id="p_customer_company">
+ <label>Phone</label><input id="p_customer_phone" type="tel">
+ <label>Email</label><input id="p_customer_email" type="email">
+ <h3>Crew</h3>
+ <div class="multi-list">${data.users.length?data.users.map(u=>`<label class="multi-row"><input class="portaloo-new-user" type="checkbox" value="${u.id}"><span>${esc(u.name)}</span></label>`).join(''):'<div class="muted">No crew members added yet.</div>'}</div>
+ <label>General job notes</label><textarea id="p_notes" rows="4" style="width:100%;padding:11px;border:1px solid #d1d5db;border-radius:9px;font:inherit"></textarea>
+ <button onclick="addPortalooJob()">Create Portaloo job</button>`);
+}
+function addPortalooJob(){
+ const name=v('p_name'); if(!name)return alert('Enter a job / site name.');
+ const j={id:makeId('portaloo'),name,what3words:v('p_location'),location:'',startDate:v('p_start'),endDate:v('p_end'),rolling:document.getElementById('p_rolling')?.checked||false,status:'Booked',unit1:Number(v('p_unit1'))||0,unit2:Number(v('p_unit2'))||0,unit3:Number(v('p_unit3'))||0,unit1Name:portalooTypes()[0],unit2Name:portalooTypes()[1],unit3Name:portalooTypes()[2],userIds:[...document.querySelectorAll('.portaloo-new-user:checked')].map(x=>x.value),customer:{name:v('p_customer_name'),company:v('p_customer_company'),phone:v('p_customer_phone'),email:v('p_customer_email')},notes:v('p_notes'),services:[]};
+ data.portalooJobs.push(j);save();closeModal();showPage('portaloo');
+}
+function portalooProgress(status){const steps=['Booked','Prep','Loaded','Delivered','On Site','Collected','Complete'];const n=Math.max(0,steps.indexOf(status));return `<div class="progress job-stage-progress">${steps.map((s,i)=>`<span class="step ${i===n?'active':i<n?'done':''}" onclick="setPortalooStatus('${status.__id||''}','${s}')">${s}</span>`).join('')}</div>`}
+function what3wordsUrl(value){
+ const raw=String(value||'').trim().replace(/^\/\/\//,'').replace(/\s+/g,'.').replace(/\.+/g,'.').replace(/^\.|\.$/g,'');
+ return raw?`https://what3words.com/${encodeURIComponent(raw)}`:'';
+}
+function openWhat3WordsFor(inputId){
+ const value=document.getElementById(inputId)?.value||'';
+ const url=what3wordsUrl(value);
+ if(!url)return alert('Enter a What3words location first, for example ///filled.count.soap');
+ window.open(url,'_blank');
+}
+function viewPortalooJob(id){
+ const j=data.portalooJobs.find(x=>x.id===id);if(!j)return;
+ const services=j.services||[];
+ const crew=portalooCrewText(j);
+ openModal(`<h2>${esc(j.name)}</h2>
+ <p class="muted">${portalooDateText(j)} • ${portalooStatusBadge(j.status)}</p>
+ <div class="job-summary"><div class="row"><b>Job status</b><span class="badge">${esc(j.status)}</span></div>${portalooStatusHtml(j)}</div>
+ <div class="portaloo-units"><div class="portaloo-unit"><b>${Number(j.unit1)||0}</b><span>${esc('Mondo')}</span></div><div class="portaloo-unit"><b>${Number(j.unit2)||0}</b><span>${esc('Maxim 3000')}</span></div><div class="portaloo-unit"><b>${Number(j.unit3)||0}</b><span>${esc('Tuffway')}</span></div></div>
+ <div class="card"><h3 style="margin-top:0">Site location</h3><p>${esc(j.what3words||j.location||'No What3words location')}</p>${(j.what3words||j.location)?`<button class="maps-btn" onclick="window.open('${what3wordsUrl(j.what3words||j.location)}','_blank')">📍 Open in What3words</button>`:''}</div>
+ <div class="card"><h3 style="margin-top:0">Customer</h3><p><b>${esc(j.customer?.company||j.customer?.name||'No customer')}</b>${j.customer?.name&&j.customer?.company?`<br>${esc(j.customer.name)}`:''}</p>${j.customer?.phone?`<p>📞 <a href="tel:${esc(j.customer.phone)}">${esc(j.customer.phone)}</a></p>`:''}${j.customer?.email?`<p>✉️ <a href="mailto:${esc(j.customer.email)}">${esc(j.customer.email)}</a></p>`:''}</div>
+ <div class="card"><h3 style="margin-top:0">Crew</h3><p>👤 ${esc(crew)}</p><button class="secondary" onclick="editPortalooCrew('${j.id}')">Assign crew</button></div>
+ <div class="card"><h3 style="margin-top:0">Job notes</h3><div class="portaloo-notes">${esc(j.notes||'No notes')}</div></div>
+ <div class="card"><div class="section-head"><h3 style="margin:0">Service log</h3><button onclick="addPortalooService('${j.id}')">＋ Log service</button></div>${services.length?services.slice().reverse().map(s=>`<div class="portaloo-service"><b>${esc(s.date||'')}</b> • ${esc(s.type||'Service')}<div class="meta">${esc((s.crewIds||[]).map(userName).join(', ')||'No crew recorded')}</div>${s.notes?`<div style="margin-top:6px;white-space:pre-wrap">${esc(s.notes)}</div>`:''}<div class="actions"><button class="danger" onclick="deletePortalooService('${j.id}','${s.id}')">Delete</button></div></div>`).join(''):'<div class="empty">No services logged yet.</div>'}</div>
+ ${j.status==='Complete'?`<button class="secondary" style="width:100%;margin-top:8px" onclick="reopenPortalooJob('${j.id}')">Reopen job</button>`:`<button class="green" style="width:100%;margin-top:8px" onclick="completePortalooJob('${j.id}')">Complete job</button>`}
+ <button class="secondary" style="width:100%;margin-top:8px" onclick="editPortalooJob('${j.id}')">Edit job</button>
+ <button class="danger" style="width:100%;margin-top:8px" onclick="deletePortalooJob('${j.id}')">Delete job</button>`);
+}
+function portalooStatusHtml(j){const steps=['Booked','Prep','Loaded','Delivered','On Site','Collected','Complete'];const n=Math.max(0,steps.indexOf(j.status));return `<div class="progress job-stage-progress">${steps.map((s,i)=>`<span class="step ${i===n?'active':i<n?'done':''}" onclick="setPortalooStatus('${j.id}','${s}')">${s}</span>`).join('')}</div>`}
+function setPortalooStatus(id,status){const j=data.portalooJobs.find(x=>x.id===id);if(!j)return;j.status=status;save();viewPortalooJob(id);renderPortaloo()}
+function completePortalooJob(id){
+ const j=data.portalooJobs.find(x=>x.id===id);if(!j)return;
+ openModal(`<h2>Complete Portaloo job?</h2><p>Are you sure you want to mark <b>${esc(j.name)}</b> as complete?</p><p class="muted">The job and its service history will be kept in Completed jobs and can be reopened later.</p><div class="actions" style="margin-top:16px"><button class="secondary" onclick="closeModal()">Cancel</button><button class="green" onclick="confirmCompletePortalooJob('${id}')">Yes, complete job</button></div>`);
+}
+function confirmCompletePortalooJob(id){
+ const j=data.portalooJobs.find(x=>x.id===id);if(!j)return;
+ j.status='Complete';j.completedAt=new Date().toISOString();save();closeModal();renderPortaloo();
+}
+function reopenPortalooJob(id){
+ const j=data.portalooJobs.find(x=>x.id===id);if(!j)return;
+ j.status='Booked';j.reopenedAt=new Date().toISOString();save();viewPortalooJob(id);renderPortaloo();
+}
+function editPortalooCrew(id){const j=data.portalooJobs.find(x=>x.id===id);if(!j)return;const users=j.userIds||[];openModal(`<h2>Assign crew</h2><p><b>${esc(j.name)}</b></p><div class="multi-list">${data.users.length?data.users.map(u=>`<label class="multi-row"><input class="portaloo-edit-user" type="checkbox" value="${u.id}" ${users.includes(u.id)?'checked':''}><span>${esc(u.name)}</span></label>`).join(''):'<div class="muted">No crew members added yet.</div>'}</div><button onclick="savePortalooCrew('${id}')">Save crew</button>`)}
+function savePortalooCrew(id){const j=data.portalooJobs.find(x=>x.id===id);if(!j)return;j.userIds=[...document.querySelectorAll('.portaloo-edit-user:checked')].map(x=>x.value);save();closeModal();viewPortalooJob(id);renderPortaloo()}
+function addPortalooService(id){const j=data.portalooJobs.find(x=>x.id===id);if(!j)return;openModal(`<h2>Log service</h2><label>Date</label><input id="ps_date" type="date" value="${new Date().toISOString().slice(0,10)}"><label>Service type</label><select id="ps_type"><option>Routine service</option><option>Clean / pump out</option><option>Restock</option><option>Repair</option><option>Emergency call-out</option><option>Other</option></select><label>Crew</label><div class="multi-list">${data.users.length?data.users.map(u=>`<label class="multi-row"><input class="portaloo-service-user" type="checkbox" value="${u.id}"><span>${esc(u.name)}</span></label>`).join(''):'<div class="muted">No crew members added yet.</div>'}</div><label>Notes</label><textarea id="ps_notes" rows="4" style="width:100%;padding:11px;border:1px solid #d1d5db;border-radius:9px;font:inherit"></textarea><button onclick="savePortalooService('${id}')">Save service</button>`)}
+function savePortalooService(id){const j=data.portalooJobs.find(x=>x.id===id);if(!j)return;if(!j.services)j.services=[];j.services.push({id:makeId('service'),date:v('ps_date'),type:v('ps_type')||'Service',crewIds:[...document.querySelectorAll('.portaloo-service-user:checked')].map(x=>x.value),notes:v('ps_notes')});save();closeModal();viewPortalooJob(id);renderPortaloo()}
+function deletePortalooService(jobId,serviceId){const j=data.portalooJobs.find(x=>x.id===jobId);if(!j)return;if(!confirm('Delete this service record?'))return;j.services=(j.services||[]).filter(s=>s.id!==serviceId);save();viewPortalooJob(jobId);renderPortaloo()}
+function editPortalooJob(id){const j=data.portalooJobs.find(x=>x.id===id);if(!j)return;openModal(`<h2>Edit Portaloo job</h2><label>Job / site name</label><input id="ep_name" value="${esc(j.name)}"><label>What3words location</label><input id="ep_location" value="${esc(j.what3words||j.location||'')}" placeholder="///filled.count.soap"><button class="maps-btn" onclick="openWhat3WordsFor('ep_location')">📍 Open in What3words</button><label>Start date</label><input id="ep_start" type="date" value="${esc(j.startDate||'')}"><label style="display:flex;align-items:center;gap:9px;margin:4px 0 10px"><input id="ep_rolling" type="checkbox" style="width:22px;height:22px;margin:0" ${j.rolling?'checked':''} onchange="document.getElementById('ep_end').disabled=this.checked"> Rolling / no fixed end date</label><label>End date</label><input id="ep_end" type="date" value="${esc(j.endDate||'')}" ${j.rolling?'disabled':''}><h3>Units required</h3><label>${esc('Mondo')}</label><input id="ep_unit1" type="number" min="0" value="${Number(j.unit1)||0}"><label>${esc('Maxim 3000')}</label><input id="ep_unit2" type="number" min="0" value="${Number(j.unit2)||0}"><label>${esc('Tuffway')}</label><input id="ep_unit3" type="number" min="0" value="${Number(j.unit3)||0}"><h3>Customer</h3><label>Name</label><input id="ep_customer_name" value="${esc(j.customer?.name||'')}"><label>Company</label><input id="ep_customer_company" value="${esc(j.customer?.company||'')}"><label>Phone</label><input id="ep_customer_phone" value="${esc(j.customer?.phone||'')}"><label>Email</label><input id="ep_customer_email" value="${esc(j.customer?.email||'')}"><label>General notes</label><textarea id="ep_notes" rows="4" style="width:100%;padding:11px;border:1px solid #d1d5db;border-radius:9px;font:inherit">${esc(j.notes||'')}</textarea><button onclick="savePortalooJob('${id}')">Save changes</button>`)}
+function savePortalooJob(id){const j=data.portalooJobs.find(x=>x.id===id);if(!j)return;j.name=v('ep_name')||j.name;j.what3words=v('ep_location');j.location='';j.startDate=v('ep_start');j.rolling=document.getElementById('ep_rolling')?.checked||false;j.endDate=j.rolling?'':v('ep_end');j.unit1=Number(v('ep_unit1'))||0;j.unit2=Number(v('ep_unit2'))||0;j.unit3=Number(v('ep_unit3'))||0;j.customer={name:v('ep_customer_name'),company:v('ep_customer_company'),phone:v('ep_customer_phone'),email:v('ep_customer_email')};j.notes=v('ep_notes');save();closeModal();viewPortalooJob(id);renderPortaloo()}
+function deletePortalooJob(id){const j=data.portalooJobs.find(x=>x.id===id);if(!j)return;openModal(`<h2>Delete Portaloo job?</h2><p>Are you sure you want to delete <b>${esc(j.name)}</b>?</p><p class="muted">This will permanently remove the job and its service history from this device.</p><div class="actions"><button class="secondary" onclick="closeModal()">Cancel</button><button class="danger" onclick="confirmDeletePortalooJob('${id}')">Yes, delete job</button></div>`)}
+function confirmDeletePortalooJob(id){data.portalooJobs=data.portalooJobs.filter(x=>x.id!==id);save();closeModal();showPage('portaloo')}
+
+function showQR(itemId){const x=data.items.find(i=>i.id===itemId);openModal(`<h2>${esc(x.name)}</h2><p>${esc(x.asset)}</p><div id="qrcode"></div><p class="small">Scan this code to identify the item.</p>`);if(window.QRCode)new QRCode(document.getElementById('qrcode'),{text:'AVT:'+x.id,width:220,height:220});else document.getElementById('qrcode').innerHTML='<p>QR library not loaded.</p>'}
+async function startScan(){stopScan();if(!window.Html5Qrcode){alert('QR scanner library is still loading. Try again in a moment.');return}scanner=new Html5Qrcode('reader');try{await scanner.start({facingMode:'environment'},{fps:10,qrbox:{width:220,height:220}},code=>{if(code.startsWith('AVT:')){const x=data.items.find(i=>i.id===code.slice(4));stopScan();showPage('dashboard');if(x)viewItem(x.id);else alert('Item not found')}} ,()=>{})}catch(e){alert('Camera could not start. Please allow camera access.');}}
+function stopScan(){if(scanner){scanner.stop().catch(()=>{});scanner.clear().catch(()=>{});scanner=null}}
+window.addEventListener('error',e=>console.error('AV Tracker error:',e.message));
+render();
+</script>
+<script src="https://unpkg.com/qrcodejs@1.0.0/qrcode.min.js"></script>
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<script>
+if('serviceWorker' in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
+</script>
+</body></html>
