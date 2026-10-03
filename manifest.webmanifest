@@ -1,9 +1,0 @@
-{
-  "name": "Regency Events AV Tracker",
-  "short_name": "Regency Events",
-  "start_url": "./",
-  "display": "standalone",
-  "background_color": "#111827",
-  "theme_color": "#111827",
-  "icons":[{"src":"regency-app-logo.png","sizes":"1024x1024","type":"image/png","purpose":"any maskable"}]
-}
